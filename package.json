@@ -1,0 +1,25 @@
+{
+  "name": "pca-services-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@hubspot/api-client": "^7.1.2",
+    "axios": "^0.27.2",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "firebase": "^9.9.0",
+    "node-cache": "^4.2.0",
+    "node-cron": "^3.0.1",
+    "open": "^6.4.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
+  }
+}
