@@ -62,6 +62,7 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
         }
       };
 
+      console.log('DATE IS THIS? ', res.properties.date_de_debut_du_contrat);
       let contractStartDate = new Date(res.properties.date_de_debut_du_contrat);
       console.log('Start date: ', res.properties.date_de_debut_du_contrat);
       let contractEndDate = new Date(res.properties.date_de_fin_du_contrat);
@@ -70,8 +71,13 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
       );
       let mileageStatement = parseFloat(res.properties.releve_kilometrage);
       let totalPlannedMileage = res.properties.kilometrage_total_prevu_contrat;
-      let contractDuration = parseFloat(res.properties.duree_du_contrat);
-
+      let contractDuration;
+      console.log('DURATION IS: ', res.properties.duree_du_contrat);
+      if (parseFloat(res.properties.duree_du_contrat) < 600) {
+        contractDuration = parseFloat(res.properties.duree_du_contrat);
+      } else {
+        contractDuration = 36;
+      }
       // Contract Progress
       const contractProgress = getProgress(contractStartDate, contractEndDate);
       console.log('Contract Progress: ', contractProgress) || 0;
@@ -123,6 +129,7 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
       };
 
       let setEndDate = endDateByDuration(contractStartDate, contractDuration);
+
       console.log('This is the end date: ', setEndDate);
 
       // Update Properties
