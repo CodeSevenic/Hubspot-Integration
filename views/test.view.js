@@ -6,6 +6,7 @@ const util = require('util');
 const {
   resContacts,
   apiQueryAndOperations,
+  recentUpdatedProperties,
 } = require('../api-queries/huspots-queries');
 const { isAuthorized, getAccessToken } = require('../oauth/oauth');
 
@@ -15,9 +16,7 @@ const { isAuthorized, getAccessToken } = require('../oauth/oauth');
 
 const displayContactName = (res, contact) => {
   for (val of contact) {
-    res.write(
-      `<p>Contact name: ${val.properties.firstname} ${val.properties.lastname}</p>`
-    );
+    res.write(`<p>Contact name: ${val.properties.firstname} ${val.properties.lastname}</p>`);
   }
 };
 
@@ -30,9 +29,10 @@ exports.renderView = async (req, res) => {
     hubspotClient = new hubspot.Client({ accessToken: `${accessToken}` });
     const contact = await resContacts(accessToken);
     // cron.schedule('*/5 * * * *', () =>
-    apiQueryAndOperations(hubspotClient, accessToken);
+    // apiQueryAndOperations(hubspotClient, accessToken);
     // );
     displayContactName(res, contact);
+    recentUpdatedProperties(accessToken);
   } else {
     res.write(`<a href="/install"><h3>Install the app</h3></a>`);
   }

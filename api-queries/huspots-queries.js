@@ -1,6 +1,5 @@
 const axios = require('axios');
 const util = require('util');
-
 // ==================================================== //
 //    Using an Access Token to Query the HubSpot API    //
 // ==================================================== //
@@ -16,6 +15,151 @@ exports.resContacts = async (accessToken) => {
   const response = await axios.get(contacts, { headers });
   const data = response.data.results;
   return data;
+};
+
+exports.recentUpdatedProperties = async (accessToken) => {
+  let now = new Date();
+  const backdate = new Date(now.setDate(now.getDate() - 30));
+
+  console.log();
+  const properties = [
+    'date_de_debut_du_contrat',
+    'date_releve_kilometrage',
+    'duree_du_contrat',
+    'date_de_fin_du_contrat',
+    'releve_kilometrage',
+    'kilometrage_total_prevu_contrat',
+    'marque',
+  ];
+  try {
+    const response = await axios({
+      url: `https://api.hubapi.com/crm/v3/objects/2-106219468/search`,
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/json',
+      },
+      data: JSON.stringify({
+        limit: 100, // this is the maximum for hubspot
+        properties: properties,
+        filterGroups: [
+          {
+            filters: [
+              {
+                value: `${backdate.getTime()}`,
+                propertyName: 'hs_lastmodifieddate',
+                operator: 'GT',
+              },
+            ],
+            sorts: [
+              {
+                propertyName: 'hs_lastmodifieddate',
+                direction: 'ASCENDING',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    // console.log(response.data.results);
+
+    let itemCount = 0;
+    // All Operations will take place inside the for loop
+    for (res of response.data.results) {
+      // console.log(res.properties);
+      console.log(`//======= Object-${itemCount++}========//`);
+      const getProgress = (startDate, endDate) => {
+        let progress;
+        const total = +endDate - +startDate;
+        const elaps = Date.now() - startDate;
+        // progress = Math.round((elaps / total) * 100) + '%';
+        progress = Math.round((elaps / total) * 100);
+        if (progress === Infinity) {
+          return (progress = 0);
+        } else {
+          return progress;
+        }
+      };
+
+      console.log('Vehicle Contract Name: ', res.properties.marque);
+      console.log('DATE IS THIS? ', res.properties.date_de_debut_du_contrat);
+      let contractStartDate = new Date(res.properties.date_de_debut_du_contrat);
+      console.log('Start date: ', res.properties.date_de_debut_du_contrat);
+      let contractEndDate = new Date(res.properties.date_de_fin_du_contrat);
+      let mileageStatementDate = new Date(res.properties.date_releve_kilometrage);
+      let mileageStatement = parseFloat(res.properties.releve_kilometrage);
+      let totalPlannedMileage = res.properties.kilometrage_total_prevu_contrat;
+      let contractDuration;
+      console.log('DURATION IS: ', res.properties.duree_du_contrat);
+      if (parseFloat(res.properties.duree_du_contrat) < 600) {
+        contractDuration = parseFloat(res.properties.duree_du_contrat);
+      } else {
+        contractDuration = 36;
+      }
+      // Contract Progress
+      const contractProgress = getProgress(contractStartDate, contractEndDate);
+      console.log('Contract Progress: ', contractProgress) || 0;
+
+      // Get month difference function
+      const getMonthDifference = (startDate, endDate) => {
+        return (
+          endDate.getMonth() -
+          startDate.getMonth() +
+          12 * (endDate.getFullYear() - startDate.getFullYear())
+        );
+      };
+
+      console.log('Months difference', getMonthDifference(contractStartDate, contractEndDate));
+
+      // Get projected Kilometers
+      let calcProjectedKMs = (mileageStatement * 100) / contractProgress || 0;
+      let projectedKMs = calcProjectedKMs.toFixed(0);
+
+      // Mileage gap between Contract KMs and Projected KMs
+      // const calcMileageGap = (projectedKMs / totalPlannedMileage) * 100;
+      const calcMileageGap = ((projectedKMs - totalPlannedMileage) / totalPlannedMileage) * 100;
+      const preMileageGap = calcMileageGap - (mileageStatement / totalPlannedMileage) * 100;
+      const mileageGap = parseFloat(calcMileageGap.toFixed(0)) || 0;
+      console.log('Mileage gap: ', mileageGap);
+
+      // Get mileage gap in kms
+      function getDifference(a, b) {
+        return Math.abs(a - b);
+      }
+
+      let mileageGapInKMs = getDifference(totalPlannedMileage, projectedKMs);
+      console.log('Mileage difference: ', mileageGapInKMs);
+
+      // Set end date by month duration
+      const endDateByDuration = (startDate, duration) => {
+        if (duration) {
+          let d = new Date(startDate);
+          d.setMonth(d.getMonth() + duration);
+          return d.toLocaleDateString('fr-CA');
+        } else {
+          return null;
+        }
+      };
+
+      let setEndDate = endDateByDuration(contractStartDate, contractDuration);
+
+      console.log('This is the end date: ', setEndDate);
+
+      // Update Properties
+      updateProperty(
+        res.id,
+        accessToken,
+        contractProgress,
+        projectedKMs,
+        mileageGap,
+        mileageGapInKMs,
+        setEndDate
+      );
+    }
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {

@@ -6,6 +6,7 @@ const cron = require('node-cron');
 const opn = require('open');
 const app = express();
 const axios = require('axios');
+const cors = require('cors');
 
 const { renderView } = require('./views/test.view');
 const port = process.env.PORT || 3000;
@@ -24,6 +25,12 @@ app.use(
 );
 
 app.get('/', renderView);
+
+app.use(
+  cors({
+    origin: '*',
+  })
+);
 
 app.get('/error', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
