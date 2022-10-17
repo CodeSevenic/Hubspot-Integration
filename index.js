@@ -31,9 +31,7 @@ app.get('/error', (req, res) => {
   res.end();
 });
 
-app.listen(port, () =>
-  console.log(`=== Starting your app on http://localhost:${port} ===`)
-);
+app.listen(port, () => console.log(`=== Starting your app on http://localhost:${port} ===`));
 
 opn(`http://localhost:${port}`);
 
@@ -42,7 +40,7 @@ opn(`http://localhost:${port}`);
 //   console.log('Made an http call');
 // }, 300000); // every 5 minutes (300000)
 
-cron.schedule('*/10 * * * *', async () => {
+cron.schedule('*/5 * * * *', async () => {
   const data = await axios.get('https://pca-services.herokuapp.com/');
   console.log(data);
 });
