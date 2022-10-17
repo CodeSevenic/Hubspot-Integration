@@ -20,7 +20,7 @@ exports.resContacts = async (accessToken) => {
 
 exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
   const objectType = '2-106219468';
-  const limit = 10;
+  const limit = 80;
   const after = undefined;
   const properties = [
     'date_de_debut_du_contrat',
@@ -29,6 +29,7 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
     'date_de_fin_du_contrat',
     'releve_kilometrage',
     'kilometrage_total_prevu_contrat',
+    'marque',
   ];
   const propertiesWithHistory = undefined;
   const associations = undefined;
@@ -62,13 +63,12 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
         }
       };
 
+      console.log('Vehicle Contract Name: ', res.properties.marque);
       console.log('DATE IS THIS? ', res.properties.date_de_debut_du_contrat);
       let contractStartDate = new Date(res.properties.date_de_debut_du_contrat);
       console.log('Start date: ', res.properties.date_de_debut_du_contrat);
       let contractEndDate = new Date(res.properties.date_de_fin_du_contrat);
-      let mileageStatementDate = new Date(
-        res.properties.date_releve_kilometrage
-      );
+      let mileageStatementDate = new Date(res.properties.date_releve_kilometrage);
       let mileageStatement = parseFloat(res.properties.releve_kilometrage);
       let totalPlannedMileage = res.properties.kilometrage_total_prevu_contrat;
       let contractDuration;
@@ -91,10 +91,7 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
         );
       };
 
-      console.log(
-        'Months difference',
-        getMonthDifference(mileageStatementDate, contractEndDate)
-      );
+      console.log('Months difference', getMonthDifference(contractStartDate, contractEndDate));
 
       // Get projected Kilometers
       let calcProjectedKMs = (mileageStatement * 100) / contractProgress || 0;
@@ -102,10 +99,8 @@ exports.apiQueryAndOperations = async (hubspotClient, accessToken) => {
 
       // Mileage gap between Contract KMs and Projected KMs
       // const calcMileageGap = (projectedKMs / totalPlannedMileage) * 100;
-      const calcMileageGap =
-        ((projectedKMs - totalPlannedMileage) / totalPlannedMileage) * 100;
-      const preMileageGap =
-        calcMileageGap - (mileageStatement / totalPlannedMileage) * 100;
+      const calcMileageGap = ((projectedKMs - totalPlannedMileage) / totalPlannedMileage) * 100;
+      const preMileageGap = calcMileageGap - (mileageStatement / totalPlannedMileage) * 100;
       const mileageGap = parseFloat(calcMileageGap.toFixed(0)) || 0;
       console.log('Mileage gap: ', mileageGap);
 
